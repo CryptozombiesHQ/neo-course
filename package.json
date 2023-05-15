@@ -1,0 +1,22 @@
+{
+  "name": "neo-course",
+  "version": "1.0.0",
+  "description": "Source code for the NEO course",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CryptozombiesHQ/neo-course.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CryptozombiesHQ/neo-course/issues"
+  },
+  "homepage": "https://github.com/CryptozombiesHQ/neo-course#readme",
+  "dependencies": {
+    "@cityofzion/neon-js": "^5.4.0"
+  }
+}
