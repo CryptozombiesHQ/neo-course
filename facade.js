@@ -55,15 +55,18 @@ async function getPrice(facade, length) {
 
 async function register(facade, signingConfig, address, domainName) {
 	console.log('-> register')
+	console.log(`Address: ${address}`)
+	console.log(`domainName: ${domainName}`)
 	const intent  = {
 		scriptHash: NS_CONTRACT_HASH,
 		operation: 'register',
 		args: [
-			Neon.sc.ContractParam.hash160(address),
-			Neon.sc.ContractParam.string(domainName)
+			Neon.sc.ContractParam.string(domainName),
+			Neon.sc.ContractParam.hash160(address)
 		]
 	}
-	const response = await facade.invoke([intent], signingConfig)
+	// const response = await facade.invoke([intent], signingConfig)
+	const response = await facade.invoke(intent, signingConfig)
 	console.log(response)
 	console.log(' <- register')
 }
@@ -162,7 +165,7 @@ function base64hex2str(value) {
 	}
 	const type = 1
 	const ip = '1.2.3.4'
-	const domainName = 'cryptozombies11.neo'
+	const domainName = 'cz.neo'
 	// console.log(signingConfig)
 	// const getRootsResponse = await getRoots(facade)
 	// const response = await traverseIterator(getRootsResponse.sessionId, getRootsResponse.iteratorId, 10)
