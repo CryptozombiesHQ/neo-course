@@ -1,5 +1,4 @@
 {
-	"type": "module",
   "name": "neo-course",
   "version": "1.0.0",
   "description": "Source code for the NEO course",
@@ -18,6 +17,14 @@
   },
   "homepage": "https://github.com/CryptozombiesHQ/neo-course#readme",
   "dependencies": {
-    "@cityofzion/neon-js": "^5.4.0"
+    "@cityofzion/neon-js": "^5.4.0",
+    "commander": "^10.0.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.41.0",
+    "eslint-config-standard": "^17.1.0",
+    "eslint-plugin-import": "^2.27.5",
+    "eslint-plugin-n": "^16.0.0",
+    "eslint-plugin-promise": "^6.1.1"
   }
 }
