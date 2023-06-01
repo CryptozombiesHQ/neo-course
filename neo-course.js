@@ -5,7 +5,7 @@ const defaultSystemFee = 0
 const defaultNetworkFee = 0
 const networkMagic = CONST.MAGIC_NUMBER.TestNet
 const NS_CONTRACT_HASH = '50ac1c37690cc2cfc594472833cf57505d5f46de' // Name Service
-const NS_CONTRACT_ADDRESS = "0x50ac1c37690cc2cfc594472833cf57505d5f46de"
+const NS_CONTRACT_ADDRESS = '0x50ac1c37690cc2cfc594472833cf57505d5f46de'
 
 const URL = process.env.URL
 if (typeof URL === 'undefined') {
@@ -28,8 +28,8 @@ const recordTypes = {
   ipv4: 1,
   cn: 5,
   text: 16,
-  ipv6: 28,
-};
+  ipv6: 28
+}
 
 async function checkNetworkFee(client, transaction) {
   const feePerByteInvokeResponse = await client.invokeFunction(
@@ -43,21 +43,21 @@ async function checkNetworkFee(client, transaction) {
     } else {
       console.log(
         '\u001b[31m  ✗ Unable to get information to calculate network fee.  Using user provided value.\u001b[0m'
-      );
+      )
       transaction.networkFee = u.BigInteger.fromNumber(defaultNetworkFee)
     }
   }
 
   const feePerByte = u.BigInteger.fromNumber(
     feePerByteInvokeResponse.stack[0].value
-  );
+  )
   // Account for witness size
   const transactionByteSize = transaction.serialize().length / 2 + 109;
   // Hardcoded. Running a witness is always the same cost for the basic account.
-  const witnessProcessingFee = u.BigInteger.fromNumber(1000390);
+  const witnessProcessingFee = u.BigInteger.fromNumber(1000390)
   const networkFeeEstimate = feePerByte
     .mul(transactionByteSize)
-    .add(witnessProcessingFee);
+    .add(witnessProcessingFee)
 
   if (defaultNetworkFee && networkFeeEstimate.compare(defaultNetworkFee) <= 0) {
     transaction.networkFee = u.BigInteger.fromNumber(defaultNetworkFee);
@@ -76,7 +76,7 @@ async function checkNetworkFee(client, transaction) {
   )
 }
 
-async function checkSystemFee(client, transaction, fromAccount) {
+async function checkSystemFee (client, transaction, fromAccount) {
   const invokeFunctionResponse = await client.invokeScript(
     u.HexString.fromHex(transaction.script),
     [
@@ -107,10 +107,10 @@ async function checkSystemFee(client, transaction, fromAccount) {
   );
 }
 
-async function getRoots(rpcClient) {
+async function getRoots (rpcClient) {
   const query = new rpc.Query({
-    method: "invokefunction",
-    params: [NS_CONTRACT_ADDRESS, "roots"],
+    method: 'invokefunction',
+    params: [NS_CONTRACT_ADDRESS, 'roots'],
   })
   const response = await rpcClient.execute(query)
   const iteratorId = response.stack[0].id
@@ -118,49 +118,49 @@ async function getRoots(rpcClient) {
   return { iteratorId: iteratorId, sessionId: sessionId }
 }
 
-async function isAvailable(rpcClient, name) {
+async function isAvailable (rpcClient, name) {
   const query = new rpc.Query({
-    method: "invokefunction",
+    method: 'invokefunction',
     params: [
       NS_CONTRACT_ADDRESS,
-      "isAvailable",
-      [{ type: "String", value: name }],
-    ],
+      'isAvailable',
+      [{ type: 'String', value: name }]
+    ]
   })
   const response = await rpcClient.execute(query);
   if (response.exception != null) {
-    console.log(response.exception);
-    process.exit(0);
+    console.log(response.exception)
+    process.exit(0)
   }
-  return response.stack[0].value;
+  return response.stack[0].value
 }
 
-async function getPrice(rpcClient, length) {
+async function getPrice (rpcClient, length) {
   const query = new rpc.Query({
-    method: "invokefunction",
+    method: 'invokefunction',
     params: [
       NS_CONTRACT_ADDRESS,
-      "getPrice",
+      'getPrice',
       [
         {
-          type: "Integer",
-          value: length,
-        },
+          type: 'Integer',
+          value: length
+        }
       ],
-      [],
-    ],
+      []
+    ]
   })
   const response = await rpcClient.execute(query)
   return transformGasDecimal(response.stack[0].value)
 }
 
-async function register(rpcClient, account, domainName) {
+async function register (rpcClient, account, domainName) {
   const script = sc.createScript({
     scriptHash: NS_CONTRACT_HASH,
-    operation: "register",
+    operation: 'register',
     args: [
       sc.ContractParam.string(domainName),
-      sc.ContractParam.hash160(account.address),
+      sc.ContractParam.hash160(account.address)
     ],
   })
   const currentHeight = await rpcClient.getBlockCount()
@@ -173,7 +173,7 @@ async function register(rpcClient, account, domainName) {
       },
     ],
     validUntilBlock: currentHeight + 1000,
-    script: script,
+    script: script
   })
 
   await checkNetworkFee(rpcClient, transaction)
@@ -185,10 +185,10 @@ async function register(rpcClient, account, domainName) {
   console.log(`Transaction hash: ${result}`)
 }
 
-async function setRecord(rpcClient, account, domainName, type, value) {
+async function setRecord (rpcClient, account, domainName, type, value) {
   const script = sc.createScript({
     scriptHash: NS_CONTRACT_HASH,
-    operation: "setRecord",
+    operation: 'setRecord',
     args: [
       sc.ContractParam.string(domainName),
       sc.ContractParam.integer(type),
@@ -205,7 +205,7 @@ async function setRecord(rpcClient, account, domainName, type, value) {
       },
     ],
     validUntilBlock: currentHeight + 1000,
-    script: script,
+    script: script
   })
   await checkNetworkFee(rpcClient, transaction)
   await checkSystemFee(rpcClient, transaction, account)
@@ -216,15 +216,14 @@ async function setRecord(rpcClient, account, domainName, type, value) {
   console.log(`Transaction hash: ${result}`)
 }
 
-async function renew(rpcClient, account, domainName, duration) {
-  console.log(duration);
+async function renew (rpcClient, account, domainName, duration) {
   const script = sc.createScript({
     scriptHash: NS_CONTRACT_HASH,
-    operation: "renew",
+    operation: 'renew',
     args: [
       sc.ContractParam.string(domainName),
-      sc.ContractParam.integer(duration),
-    ],
+      sc.ContractParam.integer(duration)
+    ]
   })
   const currentHeight = await rpcClient.getBlockCount()
   console.log(`Current height: ${currentHeight}`)
@@ -247,10 +246,10 @@ async function renew(rpcClient, account, domainName, duration) {
   console.log(`Transaction hash: ${result}`)
 }
 
-async function transfer(rpcClient, account, to, domainName, data) {
+async function transfer (rpcClient, account, to, domainName, data) {
   const script = sc.createScript({
     scriptHash: NS_CONTRACT_HASH,
-    operation: "transfer",
+    operation: 'transfer',
     args: [
       sc.ContractParam.hash160(to),
       sc.ContractParam.string(domainName),
@@ -267,7 +266,7 @@ async function transfer(rpcClient, account, to, domainName, data) {
       },
     ],
     validUntilBlock: currentHeight + 1000,
-    script: script,
+    script: script
   })
   await checkNetworkFee(rpcClient, transaction)
   await checkSystemFee(rpcClient, transaction, account)
@@ -278,36 +277,34 @@ async function transfer(rpcClient, account, to, domainName, data) {
   console.log(`Transaction hash: ${result}`)
 }
 
-async function resolve(rpcClient, domainName, type) {
+async function resolve (rpcClient, domainName, type) {
   const query = new rpc.Query({
-    method: "invokefunction",
+    method: 'invokefunction',
     params: [
       NS_CONTRACT_ADDRESS,
-      "resolve",
+      'resolve',
       [
         {
-          type: "String",
-          value: domainName,
+          type: 'String',
+          value: domainName
         },
         {
-          type: "Integer",
-          value: type,
-        },
-      ],
-    ],
+          type: 'Integer',
+          value: type
+        }
+      ]
+    ]
   })
   const response = await rpcClient.execute(query)
   return response
 }
 
-async function traverseIterator(rpcClient, sessionId, iteratorId, pageSize) {
+async function traverseIterator (rpcClient, sessionId, iteratorId, pageSize) {
   let response = []
   let iter = []
   do {
     iter = await rpcClient.traverseIterator(sessionId, iteratorId, pageSize)
     response.push(...iter)
-    if (iter.length > 0) {
-    }
   } while (iter.length > 0)
   return response
 }
@@ -316,14 +313,14 @@ function base64hex2str(value) {
   return u.hexstring2str(u.base642hex(value))
 }
 
-function transformGasDecimal(num) {
+function transformGasDecimal (num) {
   if (num.length <= 8) {
-    return "0." + num.padStart(8, "0")
+    return '0.' + num.padStart(8, '0')
   }
   const decimalPoint = num.length - 8
   return (
     num.substring(0, decimalPoint) +
-    "." +
+    '.' +
     num.substring(decimalPoint, num.length)
   )
 }
@@ -409,6 +406,21 @@ function transformGasDecimal(num) {
     .action(async (name, type) => {
       const response = await resolve(rpcClient, name, recordTypes[type])
       console.log(base64hex2str(response.stack[0].value))
+    })
+
+  program
+    .command('renew')
+    .description(
+      'Extends the validity period of a domain.'
+    )
+    .argument('name', 'Domain name')
+    .argument('years', 'The address to transfer to')
+    .action(async (name, years) => {
+      if (years < 1 || years > 1) {
+        console.log('Please enter a number between 1 and 10.')
+        process.exit(0)
+      }
+      await renew(rpcClient, account, name, years)
     })
 
   program
