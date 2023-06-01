@@ -347,7 +347,7 @@ function transformGasDecimal (num) {
         getRootsResponse.sessionId,
         getRootsResponse.iteratorId,
         10
-      );
+      )
       for (item of iterableResponse) {
         console.log(base64hex2str(item.value))
       }
@@ -358,6 +358,11 @@ function transformGasDecimal (num) {
     .description('Checks if a second-level domain is available')
     .argument('name', 'Domain name')
     .action(async (name) => {
+      const endsWithNeo = name.endsWith('.neo')
+      if (!endsWithNeo) {
+        console.log(`${name} is not a valid domain name`)
+        process.exit(0)
+      }
       if (await isAvailable(rpcClient, name)) {
         console.log(`${name} is available`)
       } else {
