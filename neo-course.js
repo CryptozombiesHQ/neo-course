@@ -326,6 +326,7 @@ function transformGasDecimal (num) {
 }
 
 function checkDomainName (name) {
+  // eslint-disable-next-line no-control-regex
   const isAscii = /^[\x00-\x7F]*$/.test(name)
   if (!isAscii) {
     console.log(`${name} is not a valid domain name`)
