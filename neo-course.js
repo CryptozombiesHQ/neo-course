@@ -309,7 +309,7 @@ async function traverseIterator (rpcClient, sessionId, iteratorId, pageSize) {
   return response
 }
 
-function base64hex2str(value) {
+function base64hex2str (value) {
   return u.hexstring2str(u.base642hex(value))
 }
 
@@ -323,6 +323,26 @@ function transformGasDecimal (num) {
     '.' +
     num.substring(decimalPoint, num.length)
   )
+}
+
+function checkDomainName (name) {
+  const isAscii = /^[\x00-\x7F]*$/.test(name)
+  if (!isAscii) {
+    console.log(`${name} is not a valid domain name`)
+    process.exit(0)
+  }
+  const endsWithNeo = name.endsWith('.neo')
+  if (!endsWithNeo) {
+    console.log(`${name} is not a valid domain name`)
+    process.exit(0)
+  }
+}
+
+function checkType (type) {
+  if (!Object.keys(recordTypes).includes(type)) {
+    console.log('Type must be one of: ipv4, cn, text, and ipv6')
+    process.exit(0)
+  }
 }
 
 (async () => {
@@ -358,11 +378,7 @@ function transformGasDecimal (num) {
     .description('Checks if a second-level domain is available')
     .argument('name', 'Domain name')
     .action(async (name) => {
-      const endsWithNeo = name.endsWith('.neo')
-      if (!endsWithNeo) {
-        console.log(`${name} is not a valid domain name`)
-        process.exit(0)
-      }
+      checkDomainName(name)
       if (await isAvailable(rpcClient, name)) {
         console.log(`${name} is available`)
       } else {
@@ -375,6 +391,7 @@ function transformGasDecimal (num) {
     .description('Retrieves the price for registering a second-level domain.')
     .argument('name', 'Domain name')
     .action(async (name) => {
+      checkDomainName(name)
       console.log(
         `The price for registering ${name} is ${await getPrice(
           rpcClient,
@@ -388,6 +405,7 @@ function transformGasDecimal (num) {
     .description('Register a second-level domain')
     .argument('name', 'Domain name')
     .action(async (name) => {
+      checkDomainName(name)
       await register(rpcClient, account, name)
     })
 
@@ -398,6 +416,12 @@ function transformGasDecimal (num) {
     .argument('type', 'Type must be one of: ipv4, cn, text, and ipv6')
     .argument('data', 'The corresponding data')
     .action(async (name, type, data) => {
+      checkDomainName(name)
+      checkType(type)
+      if (!Object.keys(recordTypes).includes(type)) {
+        console.log('Type must be one of: ipv4, cn, text, and ipv6')
+        process.exit(0)
+      }
       await setRecord(rpcClient, account, name, recordTypes[type], data)
     })
 
@@ -409,6 +433,8 @@ function transformGasDecimal (num) {
     .argument('name', 'Domain name')
     .argument('type', 'Type must be one of: ipv4, cn, text, or ipv6.')
     .action(async (name, type) => {
+      checkDomainName(name)
+      checkType(type)
       const response = await resolve(rpcClient, name, recordTypes[type])
       console.log(base64hex2str(response.stack[0].value))
     })
@@ -421,6 +447,7 @@ function transformGasDecimal (num) {
     .argument('name', 'Domain name')
     .argument('years', 'The address to transfer to')
     .action(async (name, years) => {
+      checkDomainName(name)
       if (years < 1 || years > 1) {
         console.log('Please enter a number between 1 and 10.')
         process.exit(0)
@@ -437,6 +464,7 @@ function transformGasDecimal (num) {
     .argument('to', 'The address to transfer to')
     .argument('data', 'The data information used after transfer.')
     .action(async (name, to, data) => {
+      checkDomainName(name)
       await transfer(rpcClient, account, to, name, data)
     })
 
