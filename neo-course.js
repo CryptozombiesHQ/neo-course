@@ -31,7 +31,7 @@ const recordTypes = {
   ipv6: 28
 }
 
-async function checkNetworkFee(client, transaction) {
+async function checkNetworkFee (client, transaction) {
   const feePerByteInvokeResponse = await client.invokeFunction(
     CONST.NATIVE_CONTRACT_HASH.PolicyContract,
     'getFeePerByte'
@@ -428,7 +428,7 @@ function checkType (type) {
   program
     .command('resolve')
     .description(
-      'Retrieves the record of a second-level domain or its subdomains.'
+      'Resolves the record of a second-level domain with the specific type.'
     )
     .argument('name', 'Domain name')
     .argument('type', 'Type must be one of: ipv4, cn, text, or ipv6.')
