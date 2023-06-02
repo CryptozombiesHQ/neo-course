@@ -18,11 +18,6 @@ if (typeof privateKey === 'undefined') {
   console.log('The PRIVATE_KEY environment variable is not defined.')
   process.exit(1)
 }
-const password = process.env.PASSWORD
-if (typeof password === 'undefined') {
-  console.log('The PASSWORD environment variable is not defined.')
-  process.exit(1)
-}
 
 const recordTypes = {
   ipv4: 1,
@@ -347,8 +342,7 @@ function checkType (type) {
 }
 
 (async () => {
-  const decryptedPrivateKey = await wallet.decrypt(privateKey, password)
-  const account = new wallet.Account(decryptedPrivateKey)
+  const account = new wallet.Account(privateKey)
   console.log(`Address: ${account.address} / 0x${account.scriptHash}`)
   const rpcClient = new rpc.RPCClient(URL)
 
