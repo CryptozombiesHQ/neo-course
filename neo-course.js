@@ -47,7 +47,7 @@ async function checkNetworkFee (client, transaction) {
     feePerByteInvokeResponse.stack[0].value
   )
   // Account for witness size
-  const transactionByteSize = transaction.serialize().length / 2 + 109;
+  const transactionByteSize = transaction.serialize().length / 2 + 109
   // Hardcoded. Running a witness is always the same cost for the basic account.
   const witnessProcessingFee = u.BigInteger.fromNumber(1000390)
   const networkFeeEstimate = feePerByte
@@ -55,14 +55,14 @@ async function checkNetworkFee (client, transaction) {
     .add(witnessProcessingFee)
 
   if (defaultNetworkFee && networkFeeEstimate.compare(defaultNetworkFee) <= 0) {
-    transaction.networkFee = u.BigInteger.fromNumber(defaultNetworkFee);
+    transaction.networkFee = u.BigInteger.fromNumber(defaultNetworkFee)
     console.log(
       `  i Node indicates ${networkFeeEstimate.toDecimal(
         8
       )} networkFee but using user provided value of ${defaultNetworkFee}`
-    );
+    )
   } else {
-    transaction.networkFee = networkFeeEstimate;
+    transaction.networkFee = networkFeeEstimate
   }
   console.log(
     `\u001b[32m  ✓ Network Fee set: ${transaction.networkFee.toDecimal(
@@ -86,31 +86,31 @@ async function checkSystemFee (client, transaction, fromAccount) {
   }
   const requiredSystemFee = u.BigInteger.fromNumber(
     invokeFunctionResponse.gasconsumed
-  );
+  )
   if (defaultSystemFee && requiredSystemFee.compare(defaultSystemFee) <= 0) {
     transaction.systemFee = u.BigInteger.fromNumber(defaultSystemFee)
     console.log(
       `  i Node indicates ${requiredSystemFee} systemFee but using user provided value of ${defaultSystemFee}`
-    );
+    )
   } else {
-    transaction.systemFee = requiredSystemFee;
+    transaction.systemFee = requiredSystemFee
   }
   console.log(
     `\u001b[32m  ✓ SystemFee set: ${transaction.systemFee.toDecimal(
       8
     )}\u001b[0m`
-  );
+  )
 }
 
 async function getRoots (rpcClient) {
   const query = new rpc.Query({
     method: 'invokefunction',
-    params: [NS_CONTRACT_ADDRESS, 'roots'],
+    params: [NS_CONTRACT_ADDRESS, 'roots']
   })
   const response = await rpcClient.execute(query)
   const iteratorId = response.stack[0].id
   const sessionId = response.session
-  return { iteratorId: iteratorId, sessionId: sessionId }
+  return { iteratorId, sessionId }
 }
 
 async function isAvailable (rpcClient, name) {
@@ -122,7 +122,7 @@ async function isAvailable (rpcClient, name) {
       [{ type: 'String', value: name }]
     ]
   })
-  const response = await rpcClient.execute(query);
+  const response = await rpcClient.execute(query)
   if (response.exception != null) {
     console.log(response.exception)
     process.exit(0)
@@ -149,14 +149,14 @@ async function getPrice (rpcClient, length) {
   return transformGasDecimal(response.stack[0].value)
 }
 
-async function register (rpcClient, account, domainName) {
+async function sendTransaction (rpcClient, account, operation, params) {
+  const args = params.map((param) => {
+    return sc.ContractParam[param.type](param.value)
+  })
   const script = sc.createScript({
     scriptHash: NS_CONTRACT_HASH,
-    operation: 'register',
-    args: [
-      sc.ContractParam.string(domainName),
-      sc.ContractParam.hash160(account.address)
-    ],
+    operation,
+    args
   })
   const currentHeight = await rpcClient.getBlockCount()
   console.log(`Current height: ${currentHeight}`)
@@ -164,105 +164,13 @@ async function register (rpcClient, account, domainName) {
     signers: [
       {
         account: account.scriptHash,
-        scopes: tx.WitnessScope.CalledByEntry,
-      },
+        scopes: tx.WitnessScope.CalledByEntry
+      }
     ],
     validUntilBlock: currentHeight + 1000,
-    script: script
+    script
   })
 
-  await checkNetworkFee(rpcClient, transaction)
-  await checkSystemFee(rpcClient, transaction, account)
-  const signedTransaction = transaction.sign(account, networkMagic)
-  const result = await rpcClient.sendRawTransaction(
-    u.HexString.fromHex(signedTransaction.serialize(true)).toBase64()
-  )
-  console.log(`Transaction hash: ${result}`)
-}
-
-async function setRecord (rpcClient, account, domainName, type, value) {
-  const script = sc.createScript({
-    scriptHash: NS_CONTRACT_HASH,
-    operation: 'setRecord',
-    args: [
-      sc.ContractParam.string(domainName),
-      sc.ContractParam.integer(type),
-      sc.ContractParam.string(value),
-    ],
-  })
-  const currentHeight = await rpcClient.getBlockCount()
-  console.log(`Current height: ${currentHeight}`)
-  const transaction = new tx.Transaction({
-    signers: [
-      {
-        account: account.scriptHash,
-        scopes: tx.WitnessScope.CalledByEntry,
-      },
-    ],
-    validUntilBlock: currentHeight + 1000,
-    script: script
-  })
-  await checkNetworkFee(rpcClient, transaction)
-  await checkSystemFee(rpcClient, transaction, account)
-  const signedTransaction = transaction.sign(account, networkMagic)
-  const result = await rpcClient.sendRawTransaction(
-    u.HexString.fromHex(signedTransaction.serialize(true)).toBase64()
-  )
-  console.log(`Transaction hash: ${result}`)
-}
-
-async function renew (rpcClient, account, domainName, duration) {
-  const script = sc.createScript({
-    scriptHash: NS_CONTRACT_HASH,
-    operation: 'renew',
-    args: [
-      sc.ContractParam.string(domainName),
-      sc.ContractParam.integer(duration)
-    ]
-  })
-  const currentHeight = await rpcClient.getBlockCount()
-  console.log(`Current height: ${currentHeight}`)
-  const transaction = new tx.Transaction({
-    signers: [
-      {
-        account: account.scriptHash,
-        scopes: tx.WitnessScope.CalledByEntry,
-      },
-    ],
-    validUntilBlock: currentHeight + 1000,
-    script: script,
-  })
-  await checkNetworkFee(rpcClient, transaction)
-  await checkSystemFee(rpcClient, transaction, account)
-  const signedTransaction = transaction.sign(account, networkMagic)
-  const result = await rpcClient.sendRawTransaction(
-    u.HexString.fromHex(signedTransaction.serialize(true)).toBase64()
-  )
-  console.log(`Transaction hash: ${result}`)
-}
-
-async function transfer (rpcClient, account, to, domainName, data) {
-  const script = sc.createScript({
-    scriptHash: NS_CONTRACT_HASH,
-    operation: 'transfer',
-    args: [
-      sc.ContractParam.hash160(to),
-      sc.ContractParam.string(domainName),
-      sc.ContractParam.string(data),
-    ],
-  })
-  const currentHeight = await rpcClient.getBlockCount()
-  console.log(`Current height: ${currentHeight}`)
-  const transaction = new tx.Transaction({
-    signers: [
-      {
-        account: account.scriptHash,
-        scopes: tx.WitnessScope.CalledByEntry,
-      },
-    ],
-    validUntilBlock: currentHeight + 1000,
-    script: script
-  })
   await checkNetworkFee(rpcClient, transaction)
   await checkSystemFee(rpcClient, transaction, account)
   const signedTransaction = transaction.sign(account, networkMagic)
@@ -294,8 +202,30 @@ async function resolve (rpcClient, domainName, type) {
   return response
 }
 
+async function getRecord (rpcClient, domainName, type) {
+  const query = new rpc.Query({
+    method: 'invokefunction',
+    params: [
+      NS_CONTRACT_ADDRESS,
+      'resolve',
+      [
+        {
+          type: 'String',
+          value: domainName
+        },
+        {
+          type: 'Integer',
+          value: type
+        }
+      ]
+    ]
+  })
+  const response = await rpcClient.execute(query)
+  return response
+}
+
 async function traverseIterator (rpcClient, sessionId, iteratorId, pageSize) {
-  let response = []
+  const response = []
   let iter = []
   do {
     iter = await rpcClient.traverseIterator(sessionId, iteratorId, pageSize)
@@ -401,7 +331,8 @@ function checkType (type) {
     .argument('name', 'Domain name')
     .action(async (name) => {
       checkDomainName(name)
-      await register(rpcClient, account, name)
+      const params = [{ type: 'string', value: name }, { type: 'hash160', value: account.address }]
+      await sendTransaction(rpcClient, account, 'register', params)
     })
 
   program
@@ -417,7 +348,8 @@ function checkType (type) {
         console.log('Type must be one of: ipv4, cn, text, and ipv6')
         process.exit(0)
       }
-      await setRecord(rpcClient, account, name, recordTypes[type], data)
+      const params = [{ type: 'string', value: name }, { type: 'integer', value: recordTypes[type] }, { type: 'string', value: data }]
+      await sendTransaction(rpcClient, account, 'setRecord', params)
     })
 
   program
@@ -435,6 +367,20 @@ function checkType (type) {
     })
 
   program
+    .command('get-record')
+    .description(
+      'Gets the record of a second-level domain with the specific type.'
+    )
+    .argument('name', 'Domain name')
+    .argument('type', 'Type must be one of: ipv4, cn, text, or ipv6.')
+    .action(async (name, type) => {
+      checkDomainName(name)
+      checkType(type)
+      const response = await getRecord(rpcClient, name, recordTypes[type])
+      console.log(base64hex2str(response.stack[0].value))
+    })
+
+  program
     .command('renew')
     .description(
       'Extends the validity period of a domain.'
@@ -447,7 +393,22 @@ function checkType (type) {
         console.log('Please enter a number between 1 and 10.')
         process.exit(0)
       }
-      await renew(rpcClient, account, name, years)
+      const params = [{ type: 'string', value: name }, { type: 'integer', value: years }]
+      await sendTransaction(rpcClient, account, 'renew', params)
+    })
+
+  program
+    .command('set-admin')
+    .description(
+      'Sets the administrator for a second-level domain.'
+    )
+    .argument('name', 'Domain name')
+    .argument('admin', 'The administrator that the owner specifies.')
+    .action(async (name, admin) => {
+      checkDomainName(name)
+      const params = [{ type: 'string', value: name }, { type: 'hash160', value: admin }]
+      await sendTransaction(rpcClient, account, 'setAdmin', params)
+      // await setAdmin(rpcClient, account, name, admin)
     })
 
   program
@@ -460,7 +421,8 @@ function checkType (type) {
     .argument('data', 'The data information used after transfer.')
     .action(async (name, to, data) => {
       checkDomainName(name)
-      await transfer(rpcClient, account, to, name, data)
+      const params = [{ type: 'hash160', value: to }, { type: 'string', value: name }, { type: 'string', value: data }]
+      await sendTransaction(rpcClient, account, 'transfer', params)
     })
 
   program.parse()
